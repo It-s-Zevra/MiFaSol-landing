@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@theme {
+  /* ===== Paleta MiFaSol Girasol =====
+     70% de la página: blanco hueso + amarillo + café.
+     Acentos rosa/verde/celeste son decorativos, nunca dominantes. */
+
+  /* Primario — amarillo girasol */
+  --color-girasol-50: #fffaeb;
+  --color-girasol-100: #ffe89b;
+  --color-girasol-200: #ffd86b;
+  --color-girasol-500: #ffc83d;
+  --color-girasol-600: #f5b51a;
+
+  /* Secundario — café */
+  --color-cafe-500: #a0673e;
+  --color-cafe-700: #5c3a21;
+  --color-cafe-900: #3d2614;
+
+  /* Neutros — blanco hueso, NO blanco puro */
+  --color-hueso: #fffbf3;
+  --color-crema: #fff6e0;
+
+  /* Acentos lúdicos — máx 2 por sección */
+  --color-petalo: #f4a8b8;
+  --color-hoja: #8fb87f;
+  --color-cielo: #b6d9e8;
+
+  /* Tipografía — cargadas vía next/font en app/layout.tsx */
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-nunito), system-ui, sans-serif;
+  --font-handwriting: var(--font-caveat), cursive;
+
+  /* Radios generosos */
+  --radius-card: 1.5rem;
+  --radius-pill: 9999px;
+
+  /* Sombras suaves — nunca duras */
+  --shadow-soft: 0 20px 60px rgba(92, 58, 33, 0.08);
+  --shadow-soft-lg: 0 30px 80px rgba(92, 58, 33, 0.12);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-hueso);
+    color: var(--color-cafe-700);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    color: var(--color-cafe-700);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Focus visible custom — anillo amarillo girasol */
+  :focus-visible {
+    outline: 3px solid var(--color-girasol-500);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Selección de texto */
+  ::selection {
+    background-color: var(--color-girasol-100);
+    color: var(--color-cafe-700);
+  }
+}
+
+@layer utilities {
+  /* Animación float infinita y suave para ilustraciones decorativas.
+     Los elementos deben usar distintos delays para no sincronizarse. */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  /* Spin lento — para el girasol del logo (loop sutil de 30s) */
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 30s linear infinite;
+  }
+
+  /* Morph orgánico del blob de la foto del hero */
+  @keyframes morph {
+    0%, 100% { border-radius: 60% 40% 50% 50% / 50% 60% 40% 50%; }
+    33%      { border-radius: 40% 60% 60% 40% / 40% 50% 60% 50%; }
+    66%      { border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; }
+  }
+  .animate-morph {
+    animation: morph 14s ease-in-out infinite;
+  }
+
+  /* Pulso suave para halos y círculos decorativos */
+  @keyframes pulse-soft {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.03); }
+  }
+  .animate-pulse-soft {
+    animation: pulse-soft 6s ease-in-out infinite;
+  }
+
+  /* Wobble — para el botón flotante de WhatsApp al entrar */
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+  .animate-wobble {
+    animation: wobble 0.6s ease-in-out;
+  }
+
+  /* Oculta el scrollbar nativo en carruseles horizontales */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Respetar prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
