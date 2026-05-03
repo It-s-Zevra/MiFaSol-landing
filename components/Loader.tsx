@@ -11,6 +11,13 @@ export function Loader() {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
+    // Siempre arrancar arriba: anula la restauración automática del browser
+    // y fuerza el scroll a (0, 0) en cada carga.
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
       setShow(false);
