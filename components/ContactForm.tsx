@@ -6,11 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { Instagram, Mail, Minus, Plus, MessageCircle, Quote } from "lucide-react";
+import { CalendarClock, Clock, Instagram, Mail, MessageCircle, Minus, Plus, Quote, X } from "lucide-react";
 import { usePrefill } from "@/lib/prefill-context";
 import { site } from "@/lib/site";
 import { images } from "@/lib/images";
-import { Sunflower } from "./icons";
+import { Sunflower, WhatsAppIcon } from "./icons";
+
+const CONTACT_ENDPOINT =
+  "https://mailer-backend-production-5f37.up.railway.app/api/v1/contact/mifasol";
 
 const espacios = [
   "Jardín infantil",
@@ -50,6 +53,8 @@ const inputClass =
 export function ContactForm() {
   const { espacio: prefillEspacio } = usePrefill();
   const [success, setSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -84,18 +89,59 @@ export function ContactForm() {
   }
 
   async function onSubmit(values: FormValues) {
-    // TODO: Conectar a Resend / EmailJS / webhook WhatsApp
-    console.log("[MiFaSol] cotización:", values);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSuccess(true);
+    setSubmitError(null);
+
+    const payload = {
+      nombre: values.nombre,
+      whatsapp: values.whatsapp,
+      email: values.email,
+      espacio: values.espacio,
+      comuna: values.comuna,
+      cantidadNinos: String(values.cantidadNinos),
+      edades: (values.edades ?? []).join(", "),
+      fecha: "Por definir",
+      mensaje: values.mensaje ?? "",
+    };
+
+    try {
+      const res = await fetch(CONTACT_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error(
+            "Recibimos muchas solicitudes. Espera un minuto y vuelve a intentarlo, o escríbenos por WhatsApp.",
+          );
+        }
+        if (res.status === 400) {
+          throw new Error(
+            "Algunos datos no son válidos. Revisa el formulario y vuelve a enviarlo.",
+          );
+        }
+        throw new Error(
+          "No pudimos enviar tu cotización. Intenta de nuevo o escríbenos por WhatsApp.",
+        );
+      }
+
+      setSubmittedEmail(values.email);
+      setSuccess(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "No pudimos enviar tu cotización. Intenta de nuevo o escríbenos por WhatsApp.",
+      );
+    }
   }
 
-  function reopenForm() {
+  function closeSuccess() {
     setSuccess(false);
+    setSubmittedEmail("");
     reset({ cantidadNinos: 15, edades: [], espacio: "" });
   }
-
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <section id="cotizar" className="py-16 md:py-24 px-6 bg-crema">
@@ -198,227 +244,360 @@ export function ContactForm() {
         {/* RIGHT — form */}
         <div className="lg:col-span-7">
           <div className="bg-hueso rounded-3xl p-6 md:p-8 border border-[#EAE3D2] shadow-soft">
-            <AnimatePresence mode="wait">
-              {success ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-center py-8 md:py-12"
-                >
-                  <motion.div
-                    initial={{ scale: 0, rotate: 0 }}
-                    animate={{ scale: 1, rotate: 360 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="mx-auto w-32 h-32"
-                  >
-                    <Sunflower className="w-32 h-32" />
-                  </motion.div>
-                  <h3 className="mt-6 font-serif font-semibold text-[28px] text-cafe-700">
-                    ¡Mensaje recibido!
-                  </h3>
-                  <p className="mt-3 text-base text-cafe-700 opacity-85 max-w-md mx-auto leading-[1.6]">
-                    Marcela o Stephanie te escribirán pronto. Mientras tanto, estírate y respira —
-                    ya estamos entrando en órbita 🌻
-                  </p>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              <div className="mb-2">
+                <h3 className="font-serif font-semibold text-2xl text-cafe-700">
+                  Solicita tu cotización
+                </h3>
+                <p className="text-sm text-cafe-500 mt-1">
+                  Todos los campos con * son obligatorios
+                </p>
+              </div>
+
+              <Field label="Nombre completo *" error={errors.nombre?.message}>
+                <input
+                  {...register("nombre")}
+                  placeholder="¿Cómo te llamas?"
+                  className={inputClass}
+                  autoComplete="name"
+                />
+              </Field>
+
+              <Field label="WhatsApp *" error={errors.whatsapp?.message}>
+                <input
+                  {...register("whatsapp")}
+                  placeholder="+569 ..."
+                  type="tel"
+                  className={inputClass}
+                  autoComplete="tel"
+                />
+              </Field>
+
+              <Field label="Email *" error={errors.email?.message}>
+                <input
+                  {...register("email")}
+                  placeholder="tu@email.com"
+                  type="email"
+                  className={inputClass}
+                  autoComplete="email"
+                />
+              </Field>
+
+              <Field label="Tipo de espacio *" error={errors.espacio?.message}>
+                <select {...register("espacio")} className={inputClass}>
+                  <option value="" disabled>
+                    Selecciona el espacio
+                  </option>
+                  {espacios.map((e) => (
+                    <option key={e} value={e}>
+                      {e}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Comuna *" error={errors.comuna?.message}>
+                <input
+                  {...register("comuna")}
+                  placeholder="¿En qué comuna?"
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field
+                label="Cantidad de niños *"
+                error={errors.cantidadNinos?.message}
+              >
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={reopenForm}
-                    className="mt-8 inline-flex items-center rounded-full border-[1.5px] border-cafe-700 px-6 py-3 text-cafe-700 font-semibold hover:bg-cafe-700 hover:text-hueso transition-colors"
+                    aria-label="Disminuir cantidad"
+                    onClick={() =>
+                      setValue("cantidadNinos", Math.max(1, cantidad - 1), {
+                        shouldValidate: false,
+                      })
+                    }
+                    className="inline-flex w-11 h-11 items-center justify-center rounded-xl border-[1.5px] border-[#EAE3D2] hover:border-girasol-500 transition"
                   >
-                    Volver al formulario
+                    <Minus className="w-4 h-4 text-cafe-700" />
                   </button>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onSubmit={handleSubmit(onSubmit)}
-                  className="space-y-5"
-                  noValidate
-                >
-                  <div className="mb-2">
-                    <h3 className="font-serif font-semibold text-2xl text-cafe-700">
-                      Solicita tu cotización
-                    </h3>
-                    <p className="text-sm text-cafe-500 mt-1">
-                      Todos los campos con * son obligatorios
-                    </p>
-                  </div>
-
-                  <Field label="Nombre completo *" error={errors.nombre?.message}>
-                    <input
-                      {...register("nombre")}
-                      placeholder="¿Cómo te llamas?"
-                      className={inputClass}
-                      autoComplete="name"
-                    />
-                  </Field>
-
-                  <Field label="WhatsApp *" error={errors.whatsapp?.message}>
-                    <input
-                      {...register("whatsapp")}
-                      placeholder="+569 ..."
-                      type="tel"
-                      className={inputClass}
-                      autoComplete="tel"
-                    />
-                  </Field>
-
-                  <Field label="Email *" error={errors.email?.message}>
-                    <input
-                      {...register("email")}
-                      placeholder="tu@email.com"
-                      type="email"
-                      className={inputClass}
-                      autoComplete="email"
-                    />
-                  </Field>
-
-                  <Field label="Tipo de espacio *" error={errors.espacio?.message}>
-                    <select {...register("espacio")} className={inputClass}>
-                      <option value="" disabled>
-                        Selecciona el espacio
-                      </option>
-                      {espacios.map((e) => (
-                        <option key={e} value={e}>
-                          {e}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <Field label="Comuna *" error={errors.comuna?.message}>
-                    <input
-                      {...register("comuna")}
-                      placeholder="¿En qué comuna?"
-                      className={inputClass}
-                    />
-                  </Field>
-
-                  <Field
-                    label="Cantidad de niños *"
-                    error={errors.cantidadNinos?.message}
+                  <input
+                    {...register("cantidadNinos", { valueAsNumber: true })}
+                    type="number"
+                    min={1}
+                    max={200}
+                    className={`${inputClass} text-center w-24`}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Aumentar cantidad"
+                    onClick={() =>
+                      setValue("cantidadNinos", Math.min(200, cantidad + 1), {
+                        shouldValidate: false,
+                      })
+                    }
+                    className="inline-flex w-11 h-11 items-center justify-center rounded-xl border-[1.5px] border-[#EAE3D2] hover:border-girasol-500 transition"
                   >
-                    <div className="flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-cafe-700" />
+                  </button>
+                </div>
+              </Field>
+
+              <Field label="Edad de los niños">
+                <div className="flex flex-wrap gap-2">
+                  {ageChips.map((chip) => {
+                    const active = selectedAges.includes(chip);
+                    return (
                       <button
+                        key={chip}
                         type="button"
-                        aria-label="Disminuir cantidad"
-                        onClick={() =>
-                          setValue("cantidadNinos", Math.max(1, cantidad - 1), {
-                            shouldValidate: false,
-                          })
+                        onClick={() => toggleAge(chip)}
+                        aria-pressed={active}
+                        className={
+                          "px-4 py-2 rounded-full text-sm transition " +
+                          (active
+                            ? "bg-girasol-500 text-cafe-700 font-semibold"
+                            : "bg-transparent border border-[#EAE3D2] text-cafe-700 hover:border-girasol-500")
                         }
-                        className="inline-flex w-11 h-11 items-center justify-center rounded-xl border-[1.5px] border-[#EAE3D2] hover:border-girasol-500 transition"
                       >
-                        <Minus className="w-4 h-4 text-cafe-700" />
+                        {chip}
                       </button>
-                      <input
-                        {...register("cantidadNinos", { valueAsNumber: true })}
-                        type="number"
-                        min={1}
-                        max={200}
-                        className={`${inputClass} text-center w-24`}
-                      />
-                      <button
-                        type="button"
-                        aria-label="Aumentar cantidad"
-                        onClick={() =>
-                          setValue("cantidadNinos", Math.min(200, cantidad + 1), {
-                            shouldValidate: false,
-                          })
-                        }
-                        className="inline-flex w-11 h-11 items-center justify-center rounded-xl border-[1.5px] border-[#EAE3D2] hover:border-girasol-500 transition"
-                      >
-                        <Plus className="w-4 h-4 text-cafe-700" />
-                      </button>
-                    </div>
-                  </Field>
+                    );
+                  })}
+                </div>
+              </Field>
 
-                  <Field label="Edad de los niños">
-                    <div className="flex flex-wrap gap-2">
-                      {ageChips.map((chip) => {
-                        const active = selectedAges.includes(chip);
-                        return (
-                          <button
-                            key={chip}
-                            type="button"
-                            onClick={() => toggleAge(chip)}
-                            aria-pressed={active}
-                            className={
-                              "px-4 py-2 rounded-full text-sm transition " +
-                              (active
-                                ? "bg-girasol-500 text-cafe-700 font-semibold"
-                                : "bg-transparent border border-[#EAE3D2] text-cafe-700 hover:border-girasol-500")
-                            }
-                          >
-                            {chip}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </Field>
+              <Field label="Fecha tentativa">
+                <div
+                  aria-disabled
+                  className="flex items-center justify-between gap-3 rounded-xl border-[1.5px] border-dashed border-[#EAE3D2] bg-[#FBF7EC] px-4 py-3 text-cafe-500 cursor-not-allowed select-none"
+                >
+                  <span className="inline-flex items-center gap-2 text-sm">
+                    <CalendarClock className="w-4 h-4 text-girasol-600" />
+                    Reserva por calendario
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-girasol-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-cafe-700">
+                    Próximamente
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-cafe-500 opacity-80">
+                  Por ahora coordinamos la fecha contigo por WhatsApp o email.
+                </p>
+              </Field>
 
-                  <Field label="Fecha tentativa">
-                    <input
-                      {...register("fecha")}
-                      type="date"
-                      min={today}
-                      className={inputClass}
-                    />
-                  </Field>
+              <Field label="Cuéntanos un poco más">
+                <textarea
+                  {...register("mensaje")}
+                  placeholder="Detalles del espacio, tema deseado, lo que sea relevante..."
+                  rows={4}
+                  className={`${inputClass} resize-none`}
+                />
+              </Field>
 
-                  <Field label="Cuéntanos un poco más">
-                    <textarea
-                      {...register("mensaje")}
-                      placeholder="Detalles del espacio, tema deseado, lo que sea relevante..."
-                      rows={4}
-                      className={`${inputClass} resize-none`}
-                    />
-                  </Field>
-
-                  <div className="pt-2">
-                    <motion.button
-                      type="submit"
-                      disabled={isSubmitting}
-                      initial="rest"
-                      animate="rest"
-                      whileHover={!isSubmitting ? "hover" : "rest"}
-                      whileTap={!isSubmitting ? "tap" : "rest"}
-                      variants={{
-                        rest: { scale: 1 },
-                        hover: { scale: 1.02 },
-                        tap: { scale: 0.98 },
-                      }}
-                      className="group w-full rounded-full bg-girasol-500 py-4 px-6 font-semibold text-cafe-700 shadow-soft hover:shadow-soft-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3 transition-shadow"
+              <div className="pt-2">
+                {submitError && (
+                  <div
+                    role="alert"
+                    className="mb-3 rounded-xl border border-[#E8B4B4] bg-[#FBECEC] px-4 py-3 text-sm text-[#9C3F3F]"
+                  >
+                    {submitError}{" "}
+                    <a
+                      href={site.whatsapp.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold underline underline-offset-2"
                     >
-                      {isSubmitting ? "Enviando..." : "Enviar mi cotización"}
-                      <motion.span
-                        variants={{
-                          rest: { rotate: 0 },
-                          hover: { rotate: 360 },
-                          tap: { rotate: 360 },
-                        }}
-                        transition={{ duration: 0.6 }}
-                        className="inline-flex"
-                      >
-                        <Sunflower className="w-5 h-5" />
-                      </motion.span>
-                    </motion.button>
-                    <p className="mt-3 text-center text-xs text-cafe-500">
-                      Sin compromiso · Te respondemos en menos de 24 horas
-                    </p>
+                      Abrir WhatsApp
+                    </a>
                   </div>
-                </motion.form>
-              )}
-            </AnimatePresence>
+                )}
+                <motion.button
+                  type="submit"
+                  disabled={isSubmitting}
+                  initial="rest"
+                  animate="rest"
+                  whileHover={!isSubmitting ? "hover" : "rest"}
+                  whileTap={!isSubmitting ? "tap" : "rest"}
+                  variants={{
+                    rest: { scale: 1 },
+                    hover: { scale: 1.02 },
+                    tap: { scale: 0.98 },
+                  }}
+                  className="group w-full rounded-full bg-girasol-500 py-4 px-6 font-semibold text-cafe-700 shadow-soft hover:shadow-soft-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-3 transition-shadow"
+                >
+                  {isSubmitting ? "Enviando..." : "Enviar mi cotización"}
+                  <motion.span
+                    variants={{
+                      rest: { rotate: 0 },
+                      hover: { rotate: 360 },
+                      tap: { rotate: 360 },
+                    }}
+                    transition={{ duration: 0.6 }}
+                    className="inline-flex"
+                  >
+                    <Sunflower className="w-5 h-5" />
+                  </motion.span>
+                </motion.button>
+                <p className="mt-3 text-center text-xs text-cafe-500">
+                  Sin compromiso · Te respondemos en menos de 24 horas
+                </p>
+              </div>
+            </form>
           </div>
         </div>
       </div>
+
+      <SuccessModal
+        open={success}
+        email={submittedEmail}
+        onClose={closeSuccess}
+      />
     </section>
+  );
+}
+
+function SuccessModal({
+  open,
+  email,
+  onClose,
+}: {
+  open: boolean;
+  email: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open, onClose]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="success-modal"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+          aria-modal="true"
+          role="dialog"
+          aria-labelledby="success-title"
+        >
+          <button
+            type="button"
+            aria-label="Cerrar"
+            onClick={onClose}
+            className="absolute inset-0 bg-cafe-700/40 backdrop-blur-sm cursor-default"
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            className="relative w-full max-w-lg rounded-3xl bg-hueso p-7 md:p-9 shadow-soft-lg border border-[#EAE3D2]"
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="absolute top-4 right-4 inline-flex w-9 h-9 items-center justify-center rounded-full text-cafe-500 hover:bg-girasol-100 hover:text-cafe-700 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center">
+              <motion.div
+                initial={{ scale: 0, rotate: 0 }}
+                animate={{ scale: 1, rotate: 360 }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+                className="mx-auto w-24 h-24"
+              >
+                <Sunflower className="w-24 h-24" />
+              </motion.div>
+              <h3
+                id="success-title"
+                className="mt-5 font-serif font-semibold text-[26px] md:text-[28px] text-cafe-700 leading-tight"
+              >
+                ¡Cotización recibida! 🌻
+              </h3>
+              <p className="mt-3 text-[15px] text-cafe-700 opacity-85 max-w-md mx-auto leading-[1.6]">
+                Marcela o Stephanie te van a escribir muy pronto con una propuesta personalizada
+                para tu espacio.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+              <div className="flex items-start gap-3 rounded-2xl bg-girasol-100/60 px-4 py-3">
+                <Clock className="w-5 h-5 text-girasol-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-cafe-700">
+                  <p className="font-semibold">Tiempo de respuesta</p>
+                  <p className="opacity-80">
+                    En menos de <strong>24 horas hábiles</strong> (lunes a viernes).
+                  </p>
+                </div>
+              </div>
+
+              {email && (
+                <div className="flex items-start gap-3 rounded-2xl bg-[#FBF7EC] px-4 py-3">
+                  <Mail className="w-5 h-5 text-girasol-600 shrink-0 mt-0.5" />
+                  <div className="text-sm text-cafe-700">
+                    <p className="font-semibold">Te enviamos un correo de confirmación</p>
+                    <p className="opacity-80">
+                      A{" "}
+                      <span className="font-medium text-cafe-700 break-all">{email}</span>. Si
+                      no lo ves, revisa tu carpeta de <strong>spam</strong> o promociones.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3 rounded-2xl bg-[#FBF7EC] px-4 py-3">
+                <MessageCircle className="w-5 h-5 text-girasol-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-cafe-700">
+                  <p className="font-semibold">¿Es urgente?</p>
+                  <p className="opacity-80">
+                    Escríbenos directo por WhatsApp y te respondemos al tiro.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-7 flex flex-col sm:flex-row gap-3">
+              <a
+                href={site.whatsapp.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-girasol-500 py-3 px-6 font-semibold text-cafe-700 shadow-soft hover:shadow-soft-lg transition-shadow"
+              >
+                <WhatsAppIcon className="w-5 h-5" />
+                Escribir por WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex flex-1 items-center justify-center rounded-full border-[1.5px] border-cafe-700 py-3 px-6 text-cafe-700 font-semibold hover:bg-cafe-700 hover:text-hueso transition-colors"
+              >
+                Listo
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

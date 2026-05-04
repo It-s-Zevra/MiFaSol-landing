@@ -50,10 +50,28 @@ export function Footer() {
           </a>
         </div>
       </div>
-      <div className="mx-auto max-w-7xl mt-10 pt-6 border-t border-hueso/15 flex flex-col md:flex-row md:justify-between gap-2 text-xs opacity-60 text-center md:text-left">
-        <p>Hecho con cariño en Chile 🇨🇱</p>
-        <p>
-          © {new Date().getFullYear()} {site.name} — Todos los derechos reservados.
+      <div className="mx-auto max-w-7xl mt-10 pt-6 border-t border-hueso/15 flex flex-col items-center gap-4 text-xs md:flex-row md:justify-between">
+        <p className="opacity-60 order-2 md:order-1">Hecho con cariño en Chile 🇨🇱</p>
+        <a
+          href="https://zevraz.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Sitio creado por Zevra"
+          className="group inline-flex items-center gap-2 text-hueso/60 hover:text-hueso transition order-1 md:order-2"
+        >
+          <span>Sitio por</span>
+          <Image
+            src="https://res.cloudinary.com/dg1x0cwdc/image/upload/v1774782823/logosolo_vjar0o.png"
+            alt=""
+            width={18}
+            height={18}
+            className="h-[18px] w-auto object-contain invert opacity-90 group-hover:opacity-100 transition"
+            unoptimized
+          />
+          <span className="font-semibold tracking-[0.2em] uppercase">Zevra</span>
+        </a>
+        <p className="opacity-60 order-3">
+          © {new Date().getFullYear()} {site.name}
         </p>
       </div>
     </footer>
