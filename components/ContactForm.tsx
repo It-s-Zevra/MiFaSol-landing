@@ -15,6 +15,31 @@ import { Sunflower, WhatsAppIcon } from "./icons";
 const CONTACT_ENDPOINT =
   "https://mailer-backend-production-5f37.up.railway.app/api/v1/contact/mifasol";
 
+const MAX_ATTEMPTS = 2;
+const COOLDOWN_MS = 60 * 60 * 1000; // 1 hora
+const STORAGE_KEY = "mifasol_form_attempts_v1";
+
+function readAttempts(): number[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((n) => typeof n === "number") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveAttempts(attempts: number[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
+  } catch {
+    // ignore quota / privacy mode errors
+  }
+}
+
 const espacios = [
   "Jardín infantil",
   "Colegio",
@@ -55,6 +80,16 @@ export function ContactForm() {
   const [success, setSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+
+  useEffect(() => {
+    const now = Date.now();
+    const fresh = readAttempts().filter((t) => now - t < COOLDOWN_MS);
+    saveAttempts(fresh);
+    if (fresh.length >= MAX_ATTEMPTS) {
+      setLockUntil(fresh[0] + COOLDOWN_MS);
+    }
+  }, []);
 
   const {
     register,
@@ -124,6 +159,14 @@ export function ContactForm() {
         throw new Error(
           "No pudimos enviar tu cotización. Intenta de nuevo o escríbenos por WhatsApp.",
         );
+      }
+
+      const now = Date.now();
+      const fresh = readAttempts().filter((t) => now - t < COOLDOWN_MS);
+      fresh.push(now);
+      saveAttempts(fresh);
+      if (fresh.length >= MAX_ATTEMPTS) {
+        setLockUntil(fresh[0] + COOLDOWN_MS);
       }
 
       setSubmittedEmail(values.email);
@@ -244,6 +287,12 @@ export function ContactForm() {
         {/* RIGHT — form */}
         <div className="lg:col-span-7">
           <div className="bg-hueso rounded-3xl p-6 md:p-8 border border-[#EAE3D2] shadow-soft">
+            {lockUntil ? (
+              <RateLimitedCard
+                lockUntil={lockUntil}
+                onUnlock={() => setLockUntil(null)}
+              />
+            ) : (
             <form
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-5"
@@ -447,6 +496,7 @@ export function ContactForm() {
                 </p>
               </div>
             </form>
+            )}
           </div>
         </div>
       </div>
@@ -457,6 +507,105 @@ export function ContactForm() {
         onClose={closeSuccess}
       />
     </section>
+  );
+}
+
+function RateLimitedCard({
+  lockUntil,
+  onUnlock,
+}: {
+  lockUntil: number;
+  onUnlock: () => void;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const remainingMs = Math.max(0, lockUntil - now);
+
+  useEffect(() => {
+    if (remainingMs === 0) onUnlock();
+  }, [remainingMs, onUnlock]);
+
+  const totalSeconds = Math.ceil(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(seconds).padStart(2, "0");
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="text-center py-4 md:py-6"
+      aria-live="polite"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: 0 }}
+        animate={{ scale: 1, rotate: 360 }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+        className="mx-auto w-20 h-20"
+      >
+        <Sunflower className="w-20 h-20" />
+      </motion.div>
+
+      <h3 className="mt-5 font-serif font-semibold text-[24px] md:text-[26px] text-cafe-700 leading-tight">
+        Ya recibimos tus mensajes 🌻
+      </h3>
+      <p className="mt-2 text-[15px] text-cafe-700 opacity-80 max-w-md mx-auto leading-[1.6]">
+        Para mantener todo ordenado y evitar mensajes duplicados, el formulario se
+        reactivará automáticamente en:
+      </p>
+
+      <div className="mt-6 inline-flex items-end justify-center gap-2 rounded-2xl bg-girasol-100/70 px-6 py-4">
+        <div className="flex items-baseline gap-1 font-serif">
+          <span className="text-[44px] md:text-[52px] leading-none font-semibold text-cafe-700 tabular-nums">
+            {mm}
+          </span>
+          <span className="text-[44px] md:text-[52px] leading-none font-semibold text-girasol-600">
+            :
+          </span>
+          <span className="text-[44px] md:text-[52px] leading-none font-semibold text-cafe-700 tabular-nums">
+            {ss}
+          </span>
+        </div>
+      </div>
+      <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cafe-500">
+        min &nbsp;·&nbsp; seg
+      </p>
+
+      <div className="mt-7 rounded-2xl bg-[#FBF7EC] border border-[#EAE3D2] px-5 py-4 text-left">
+        <p className="text-sm font-semibold text-cafe-700">
+          ¿Necesitas escribirnos antes?
+        </p>
+        <p className="text-sm text-cafe-700 opacity-80 mt-1">
+          Marcela y Stephanie ya están viendo tus mensajes. Si es urgente, contáctanos
+          directo:
+        </p>
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+          <a
+            href={site.whatsapp.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-girasol-500 py-3 px-5 font-semibold text-cafe-700 shadow-soft hover:shadow-soft-lg transition-shadow"
+          >
+            <WhatsAppIcon className="w-5 h-5" />
+            WhatsApp
+          </a>
+          <a
+            href={`mailto:${site.email}`}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-cafe-700 py-3 px-5 font-semibold text-cafe-700 hover:bg-cafe-700 hover:text-hueso transition-colors"
+          >
+            <Mail className="w-5 h-5" />
+            Email
+          </a>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
