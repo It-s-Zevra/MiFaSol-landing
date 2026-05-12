@@ -116,10 +116,10 @@ export function WhatWeDo() {
             className="relative font-serif italic font-medium text-hueso leading-[1.4]"
             style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}
           >
-            Somos educadoras de párvulos. Sabemos exactamente qué pasa en la cabeza de un niño de 3
-            años — y qué necesita para{" "}
+            Somos Educadoras de Párvulos y sabemos la importancia de la lectura temprana. A través
+            de ella los niños conocen el mundo, su imaginación se desarrolla y el{" "}
             <span className="text-girasol-500 underline decoration-girasol-500 underline-offset-4">
-              florecer.
+              lenguaje se potencia.
             </span>
           </p>
         </motion.div>

@@ -26,8 +26,10 @@
   --color-hoja: #8fb87f;
   --color-cielo: #b6d9e8;
 
-  /* Tipografía — cargadas vía next/font en app/layout.tsx */
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  /* Tipografía — cargadas vía next/font en app/layout.tsx.
+     Fredoka es la fuente principal: redonda, juguetona, alineada con el nuevo logo.
+     Caveat se usa para acentos manuscritos (palabras destacadas en cursiva). */
+  --font-serif: var(--font-fredoka), system-ui, sans-serif;
   --font-sans: var(--font-nunito), system-ui, sans-serif;
   --font-handwriting: var(--font-caveat), cursive;
 

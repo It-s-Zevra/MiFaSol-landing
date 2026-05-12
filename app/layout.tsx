@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { Fraunces, Nunito, Caveat } from "next/font/google";
+import { Fredoka, Nunito, Caveat } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const fredoka = Fredoka({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-fredoka",
   weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -20,7 +19,7 @@ const nunito = Nunito({
 const caveat = Caveat({
   subsets: ["latin"],
   variable: "--font-caveat",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -40,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-CL" className={`${fraunces.variable} ${nunito.variable} ${caveat.variable}`}>
+    <html lang="es-CL" className={`${fredoka.variable} ${nunito.variable} ${caveat.variable}`}>
       <body>{children}</body>
     </html>
   );

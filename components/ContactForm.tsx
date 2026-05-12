@@ -49,7 +49,7 @@ const espacios = [
   "Otro",
 ] as const;
 
-const ageChips = ["2-3 años", "4-5 años", "6+ años"] as const;
+const ageChips = ["0-2 años", "2-3 años", "4-5 años", "6+ años"] as const;
 
 const schema = z.object({
   nombre: z.string().min(2, "¿Cómo te llamas? Cuéntanos tu nombre 🌻"),

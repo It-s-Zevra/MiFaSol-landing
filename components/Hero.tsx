@@ -11,11 +11,10 @@ const headlineWords = [
   { text: "Cuentos", trailing: " " },
   { text: "que", trailing: " " },
   { text: "se", trailing: " " },
-  { text: "cantan", trailing: ", ", special: true },
-  { text: "momentos", trailing: " " },
-  { text: "que", trailing: " " },
-  { text: "se", trailing: " " },
-  { text: "quedan.", trailing: "" },
+  { text: "cantan,", trailing: " ", special: true },
+  { text: "cuentan", trailing: " " },
+  { text: "y", trailing: " " },
+  { text: "encantan", trailing: "", special: true },
 ];
 
 const confetti = [
@@ -37,6 +36,10 @@ export function Hero() {
 
   function scrollToHowWeDoIt() {
     document.getElementById("que-hacemos")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function scrollToWhoWeAre() {
+    document.getElementById("quienes-somos")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -189,7 +192,7 @@ export function Hero() {
               transition={{ delay: 1.2, duration: 0.6 }}
               className="text-[17px] text-cafe-700 leading-relaxed max-w-135 mb-8"
             >
-              Diseñadas para niños de 2 a 6 años por educadoras de párvulos profesionales.
+              Diseñadas para niños de 0 a 6 años por educadoras de párvulos profesionales.
               Llevamos los cuentos donde tú nos llames.
             </motion.p>
 
@@ -214,15 +217,31 @@ export function Hero() {
                 transition={{ delay: 1.7, duration: 0.4 }}
                 className="inline-flex items-center rounded-full border-[1.5px] border-cafe-700 px-8 py-4 text-cafe-700 font-semibold hover:bg-cafe-700 hover:text-hueso transition-colors"
               >
-                Ver cómo lo hacemos
+                Nuestra Metodología
               </motion.button>
             </div>
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              transition={{ delay: 1.85, duration: 0.5 }}
+              className="mt-5"
+            >
+              <button
+                type="button"
+                onClick={scrollToWhoWeAre}
+                className="group inline-flex items-center gap-1.5 text-[15px] font-semibold text-cafe-700 underline-offset-4 hover:underline decoration-girasol-500 decoration-2"
+              >
+                ¿Quiénes somos?
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-girasol-600" />
+              </button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 2, duration: 0.5 }}
-              className="mt-8 flex items-center gap-2"
+              className="mt-6 flex items-center gap-2"
             >
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-girasol-100">
                 <GraduationCap className="w-4 h-4 text-cafe-700" strokeWidth={2} />

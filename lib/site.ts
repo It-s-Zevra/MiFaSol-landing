@@ -13,8 +13,9 @@ export const site = {
   },
   nav: [
     { label: "Inicio", href: "#hero" },
-    { label: "Qué hacemos", href: "#que-hacemos" },
-    { label: "Para quién", href: "#para-quien" },
+    { label: "¿Qué hacemos?", href: "#que-hacemos" },
+    { label: "¿Para quién?", href: "#para-quien" },
+    { label: "¿Quiénes somos?", href: "#quienes-somos" },
     { label: "Cotizar", href: "#cotizar" },
   ],
 } as const;

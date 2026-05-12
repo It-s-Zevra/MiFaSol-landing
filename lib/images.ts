@@ -10,4 +10,7 @@ export const images = {
   cafe: `${BASE}/v1777774178/ico9_qqopbi.png`,
   cumple: `${BASE}/v1777774179/ico7_ngirfu.png`,
   muni: `${BASE}/v1777774172/ico8_jlcdoh.png`,
+  // TODO: reemplazar por las fotos individuales reales (placeholders por ahora).
+  marce: `${BASE}/v1777774834/icon10_opnjgh.png`,
+  stephy: `${BASE}/v1777773913/ico3_aqj7hi.png`,
 } as const;

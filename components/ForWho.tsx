@@ -108,17 +108,17 @@ export function ForWho() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6 }}
-          className="text-center mx-auto max-w-180 mb-12 md:mb-16"
+          className="text-center mx-auto max-w-220 mb-12 md:mb-16"
         >
           <p className="text-[13px] uppercase tracking-widest font-medium text-cafe-500 mb-4">
             Llegamos donde nos llamen
           </p>
           <h2
-            className="font-serif font-semibold text-cafe-700 leading-[1.1]"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
+            className="font-serif font-semibold text-cafe-700 leading-[1.15]"
+            style={{ fontSize: "clamp(1.75rem, 4vw, 3rem)" }}
           >
-            Para cada espacio donde haya niños y{" "}
-            <span className="italic text-girasol-500">ganas de jugar.</span>
+            Los cuentos y la música abrazan el corazón, expanden la mente y nos reencuentran con{" "}
+            <span className="italic text-girasol-500">el asombro del niño que fuimos.</span>
           </h2>
           <p className="mt-4 text-[17px] text-cafe-700 opacity-80">
             Adaptamos cada activación al espacio, al grupo y al momento.
